@@ -1,57 +1,178 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <link
-      href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-  </head>
-  <body>
-    <div class="jumbotron text-center" style="margin-bottom: 0">
-      <h1>
-        Food Image Recognition<br />And<br />Nutrition Viusalization System
-      </h1>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Image Recognition & Nutrition Visualization</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-top: 50px;
+        }
+
+        .jumbotron {
+            background-color: #343a40;
+            color: #ffffff;
+            padding: 2rem 1rem;
+            border-radius: .3rem;
+        }
+
+        .jumbotron h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0;
+        }
+
+        ul.navbar {
+            background-color: #343a40;
+            padding: 0;
+            margin-bottom: 20px;
+            list-style: none;
+        }
+
+        ul.navbar li {
+            float: left;
+        }
+
+        ul.navbar li a {
+            display: block;
+            color: #ffffff;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+            font-size: 1.1rem;
+        }
+
+        ul.navbar li a:hover {
+            background-color: #495057;
+        }
+
+        fieldset {
+            border: 1px solid #ced4da;
+            border-radius: .3rem;
+            margin-bottom: 20px;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #dee2e6;
+            text-align: left;
+        }
+
+        th {
+            background-color: #e9ecef;
+        }
+
+        .img-thumbnail {
+            border-radius: .3rem;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            margin: 0 auto;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+    </style>
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+</head>
+<body>
+
+    <div class="jumbotron text-center">
+        <h1>Food Image Recognition & Nutrition Visualization</h1>
     </div>
+
+    <ul class="navbar">
+        <li><a href="/recognize">Upload More Images</a></li>
+    </ul>
+
     <div class="container">
-      <div class="row">
-        <div class="col-sm-6">
-          <h2>Introduction</h2>
-          <p>
-            Each year, approximately 6,78,000 deaths are caused in the United
-            States of America due to unhealthy diet. A typical American diet is
-            too high in calories, fat, sugars, sodium, etc. Hence, people have
-            became more proactive when it comes to health matters. Services like
-            eating habit recorder and calorie/nutrition calculator have became
-            extremely popular. They can make users aware of problems like
-            obesity, cancer, diabetes, heart-disease, etc. that can be caused by
-            unhealthy diets. Most of these services require the users to
-            manually select a food item from a hierarchical menu which is a time
-            consuming process and not so user friendly.
-          </p>
-          <p>
-            An user-interactive system that takes food images as an input,
-            recognizes the food automatically and gives the nutritional-facts as
-            an output will save a lot of time.
-          </p>
-          <h3>Click here to start!</h3>
-          <ul class="nav nav-pills nav-stacked">
-            <li class="active">
-              <a href="/recognize"
-                >Food Image Recognition & Nutrition Viusalization System</a
-              >
-            </li>
-          </ul>
-          <hr class="hidden-sm hidden-md hidden-lg" />
-        </div>
-        <div class="col-sm-6">
-          <img
-            src="{{ img }}"
-            alt="food photo"
-            width="550"
-            height="400"
-          />
-        </div>
-      </div>
+        {% for p in pack %}
+            <fieldset>
+                <div class="row">
+                    <div class="col-sm-4">
+                        <img src="{{ p.image }}" class="img-fluid img-thumbnail" alt="Food Photo">
+                    </div>
+                    <div class="col-sm-4">
+                        <h4>Recognition Results</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Probability (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for key, value in p.result.items() %}
+                                    <tr>
+                                        <td>{{ key }}</td>
+                                        <td>{{ value }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <a href="{{ p.food }}" class="btn btn-primary" target="_blank">More Nutrition Information</a>
+                    </div>
+                    <div class="col-sm-4">
+                        <h4>Update Quantity</h4>
+                        <form action="/update" method="POST">
+                            <div class="form-group">
+                                <label for="quantity">Enter quantity for food (g):</label>
+                                <input type="number" id="quantity" name="q" value="{{ p.quantity }}" class="form-control">
+                            </div>
+                            <button type="submit" name="s" class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+                </div>
+            </fieldset>
+        {% endfor %}
+
+        <h2 class="text-center">Nutrition Report</h2>
+        <div id="piechart" style="height: 500px; margin:auto;"></div>
     </div>
-  </body>
+
+    <script type="text/javascript">
+        // Load Google Charts
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawChart);
+
+        // Draw the chart and set the chart values
+        function drawChart() {
+            let dataset = [['Name', 'Value']];
+            // Safely parse JSON from the Jinja2 variable
+            let wholefood = JSON.parse('{{ whole_nutrition|tojson|safe }}');
+            wholefood.forEach(element => dataset.push([element.name, element.value]));
+            let data = google.visualization.arrayToDataTable(dataset);
+
+            // Chart options
+            let options = {
+                title: 'Nutritional Information',
+                pieHole: 0.4
+            };
+
+            // Display the chart
+            let chart = new google.visualization.PieChart(document.getElementById('piechart'));
+            chart.draw(data, options);
+        }
+    </script>
+</body>
 </html>
